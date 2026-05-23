@@ -1,13 +1,4 @@
-/* ============================================================
-   AWS Cloud Cost Optimization Dashboard — Stylesheet
-   Theme: Dark AWS-inspired with glassmorphism & gradient accents
-   Layout: CSS Grid + Flexbox for responsive design
-   ============================================================ */
 
-/* ========================
-   CSS CUSTOM PROPERTIES
-   (Design Tokens)
-   ======================== */
 :root {
   /* --- AWS-inspired color palette --- */
   --color-bg-primary: #0a0e17;
@@ -69,9 +60,7 @@
   --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ========================
-   RESET & BASE STYLES
-   ======================== */
+
 *,
 *::before,
 *::after {
@@ -103,9 +92,6 @@ a {
   color: inherit;
 }
 
-/* ========================
-   NAVIGATION BAR
-   ======================== */
 .navbar {
   position: fixed;
   top: 0;
@@ -230,9 +216,7 @@ a {
   to { transform: rotate(360deg); }
 }
 
-/* ========================
-   HERO SECTION
-   ======================== */
+
 .hero {
   position: relative;
   display: flex;
@@ -415,9 +399,7 @@ a {
   letter-spacing: 0.05em;
 }
 
-/* ========================
-   ERROR CARD
-   ======================== */
+
 .error-card {
   max-width: 480px;
   margin: var(--space-3xl) auto;
@@ -476,9 +458,6 @@ a {
   height: 16px;
 }
 
-/* ========================
-   SECTION LAYOUT
-   ======================== */
 .section {
   margin-bottom: var(--space-2xl);
 }
@@ -517,9 +496,7 @@ a {
   border-radius: 50px;
 }
 
-/* ========================
-   SUMMARY CARDS GRID
-   ======================== */
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -646,9 +623,6 @@ a {
   color: var(--text-muted);
 }
 
-/* ========================
-   STATUS BANNER
-   ======================== */
 .status-banner {
   display: flex;
   align-items: center;
@@ -832,9 +806,6 @@ a {
   font-size: 0.9rem;
 }
 
-/* ========================
-   CHARTS SECTION
-   ======================== */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -881,9 +852,7 @@ a {
   max-height: 300px;
 }
 
-/* ========================
-   FOOTER
-   ======================== */
+
 .footer {
   border-top: 1px solid var(--color-border);
   padding: var(--space-2xl) var(--space-xl);
@@ -930,9 +899,7 @@ a {
   color: var(--text-muted);
 }
 
-/* ========================
-   NUMBER COUNT-UP ANIMATION
-   ======================== */
+
 .card-value.counting {
   animation: count-pulse 0.3s ease;
 }
@@ -942,9 +909,6 @@ a {
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* ========================
-   RESPONSIVE DESIGN
-   ======================== */
 
 /* Tablets and smaller desktops */
 @media (max-width: 1024px) {
@@ -1038,9 +1002,7 @@ a {
   }
 }
 
-/* ========================
-   SCROLLBAR STYLING
-   ======================== */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -1059,9 +1021,7 @@ a {
   background: var(--text-muted);
 }
 
-/* ========================
-   SELECTION HIGHLIGHT
-   ======================== */
+
 ::selection {
   background: rgba(255, 153, 0, 0.3);
   color: white;

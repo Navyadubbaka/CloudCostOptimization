@@ -1,31 +1,8 @@
-/**
- * ============================================================
- * AWS Cloud Cost Optimization Dashboard — Main Script
- *
- * Fetches data from the AWS API Gateway endpoint, processes
- * the JSON response, and dynamically renders:
- *   - Summary metric cards (Dashboard)
- *   - Infrastructure status indicator (Status)
- *   - Purged resources table (Resources)
- *   - Chart.js pie & bar charts (Analytics)
- *
- * Uses async/await with fetch() for clean, modern JS patterns.
- * ============================================================
- */
 
-// ========================
-// CONFIGURATION
-// ========================
-
-/** API endpoint that returns cloud cost optimization data */
 const API_URL =
   "https://yg8e15q1vg.execute-api.us-east-1.amazonaws.com/prod/cleanup-data";
 
-// ========================
-// DOM ELEMENT REFERENCES
-// ========================
 
-// Loading & Error states
 const loadingOverlay = document.getElementById("loadingOverlay");
 const errorCard = document.getElementById("errorCard");
 const errorMessage = document.getElementById("errorMessage");
@@ -61,18 +38,7 @@ const navLinks = document.querySelectorAll(".nav-link");
 let pieChartInstance = null;
 let barChartInstance = null;
 
-// ========================
-// NAVIGATION: SMOOTH SCROLL + ACTIVE LINK HIGHLIGHT
-// ========================
 
-/**
- * initNavigation()
- *
- * Sets up:
- * 1. Smooth scroll when clicking nav links (Dashboard, Status, Resources, Analytics)
- * 2. IntersectionObserver to highlight the active nav link as user scrolls
- * 3. Scroll-based navbar background change
- */
 function initNavigation() {
   // --- Smooth Scroll on Nav Link Click ---
   navLinks.forEach((link) => {
@@ -137,32 +103,13 @@ function initNavigation() {
   });
 }
 
-/**
- * setActiveNavLink(activeLink)
- * Removes 'active' class from all nav links and adds it to the given one.
- */
+
 function setActiveNavLink(activeLink) {
   navLinks.forEach((l) => l.classList.remove("active"));
   activeLink.classList.add("active");
 }
 
-// ========================
-// MAIN DATA FETCH FUNCTION
-// ========================
 
-/**
- * fetchDashboardData()
- *
- * Fetches optimization data from the AWS API Gateway.
- *
- * The API returns JSON that may be structured in different ways:
- *   1. { body: '{"summary": {...}, "purgedItemsDetails": [...]}' }  — body is a string
- *   2. { body: { summary: {...}, purgedItemsDetails: [...] } }      — body is an object
- *   3. { summary: {...}, purgedItemsDetails: [...] }                — direct response
- *   4. { statusCode: 200, body: '...' }                            — Lambda proxy format
- *
- * This function handles ALL of these cases.
- */
 async function fetchDashboardData() {
   // Show loading state, hide other states
   showLoading();
@@ -170,8 +117,6 @@ async function fetchDashboardData() {
   try {
     console.log("🔄 Fetching data from:", API_URL);
 
-    // Fetch data from the API endpoint
-    // const response = await fetch(API_URL);
     const response = await fetch(API_URL + "?nocache=" + new Date().getTime());
 
     // Check for HTTP errors (4xx, 5xx)
@@ -319,11 +264,6 @@ function extractResult(data) {
   );
 }
 
-// ========================
-// UI STATE MANAGEMENT
-// ========================
-
-/** Show the loading spinner, hide everything else */
 function showLoading() {
   loadingOverlay.style.display = "flex";
   errorCard.style.display = "none";
@@ -345,15 +285,7 @@ function showError(message) {
   errorMessage.textContent = `Error: ${message}`;
 }
 
-// ========================
-// RENDER: SUMMARY CARDS
-// ========================
 
-/**
- * renderSummaryCards(summary)
- *
- * Populates the five metric cards with animated count-up values.
- */
 function renderSummaryCards(summary) {
   animateValue(totalSnapshotsEl, 0, summary.totalSnapshotsAnalyzed || 0, 800);
   animateValue(deletedWasteEl, 0, summary.deletedWasteCount || 0, 800);
@@ -374,10 +306,7 @@ function renderSummaryCards(summary) {
   );
 }
 
-/**
- * animateValue()
- * Smoothly animates a number from `start` to `end` inside `element`.
- */
+
 function animateValue(element, start, end, duration, isCurrency = false) {
   const startTime = performance.now();
   element.classList.add("counting");
@@ -404,14 +333,6 @@ function animateValue(element, start, end, duration, isCurrency = false) {
   requestAnimationFrame(update);
 }
 
-// ========================
-// RENDER: STATUS BANNER
-// ========================
-
-/**
- * renderStatusBanner(purgedItems)
- * Shows RED warning if waste detected, GREEN success if clean.
- */
 function renderStatusBanner(purgedItems) {
   statusBanner.classList.remove("status-warning", "status-success");
 
@@ -439,14 +360,6 @@ function renderStatusBanner(purgedItems) {
   }
 }
 
-// ========================
-// RENDER: RESOURCES TABLE
-// ========================
-
-/**
- * renderTable(purgedItems)
- * Dynamically generates table rows for each purged resource.
- */
 function renderTable(purgedItems) {
   tableBody.innerHTML = "";
 
@@ -491,14 +404,7 @@ function renderTable(purgedItems) {
   });
 }
 
-// ========================
-// RENDER: CHART.JS CHARTS
-// ========================
 
-/**
- * renderCharts(summary)
- * Creates/recreates two Chart.js charts.
- */
 function renderCharts(summary) {
   if (pieChartInstance) pieChartInstance.destroy();
   if (barChartInstance) barChartInstance.destroy();
@@ -646,9 +552,6 @@ function createGradient(ctx, colorStart, colorEnd) {
   return gradient;
 }
 
-// ========================
-// UTILITY: LAST UPDATED
-// ========================
 
 function updateLastUpdated() {
   const now = new Date();
@@ -660,11 +563,7 @@ function updateLastUpdated() {
   lastUpdatedEl.textContent = `Last updated: ${timeStr}`;
 }
 
-// ========================
-// EVENT LISTENERS
-// ========================
 
-// Refresh button
 refreshBtn.addEventListener("click", () => {
   refreshBtn.classList.add("loading");
   fetchDashboardData().finally(() => {
@@ -677,9 +576,6 @@ errorRetryBtn.addEventListener("click", () => {
   fetchDashboardData();
 });
 
-// ========================
-// INITIAL LOAD
-// ========================
 
 document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
