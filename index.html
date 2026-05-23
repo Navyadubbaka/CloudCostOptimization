@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ============================================
+       AWS Cloud Cost Optimization Dashboard
+       Built with HTML, CSS, JavaScript & Chart.js
+       ============================================ -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AWS Cloud Cost Optimization Dashboard — Monitor, analyze, and reduce cloud spending with serverless automation." />
+  <title>AWS Cost Optimization Dashboard</title>
+
+  <!-- Google Fonts — Inter for modern, clean typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN for pie/bar charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===================== NAVIGATION BAR ===================== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <!-- AWS-style cloud icon (SVG) -->
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 15a4 4 0 0 0 4 4h10a3 3 0 0 0 .75-5.91A5.002 5.002 0 0 0 8 10.1 4.5 4.5 0 0 0 3 15z" />
+      </svg>
+      <span class="nav-title">CloudOps<span class="accent">Console</span></span>
+    </div>
+    <div class="nav-links">
+      <a href="#summary" class="nav-link">Dashboard</a>
+      <a href="#status-section" class="nav-link">Status</a>
+      <a href="#table-section" class="nav-link">Resources</a>
+      <a href="#charts-section" class="nav-link">Analytics</a>
+    </div>
+    <!-- Real-time Refresh Button -->
+    <button class="refresh-btn" id="refreshBtn" title="Refresh dashboard data">
+      <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 4v6h6M23 20v-6h-6" />
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+      </svg>
+      <span>Refresh</span>
+    </button>
+  </nav>
+
+  <!-- ===================== HERO SECTION ===================== -->
+  <header class="hero" id="hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Serverless Cloud Automation
+      </div>
+      <h1 class="hero-title">
+        AWS Cost Optimization
+        <span class="hero-title-gradient">Dashboard</span>
+      </h1>
+      <p class="hero-subtitle">
+        Intelligent serverless automation powered by AWS Lambda &amp; EventBridge to detect, analyze, and eliminate cloud waste — saving costs in real time.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span>Lambda Powered</span>
+        </div>
+        <div class="hero-stat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Cost Shield</span>
+        </div>
+        <div class="hero-stat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span>Real-Time</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== MAIN DASHBOARD CONTENT ===================== -->
+  <main class="dashboard-main">
+
+    <!-- ============ LOADING SPINNER ============ -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner-container">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring spinner-ring-2"></div>
+        <div class="spinner-ring spinner-ring-3"></div>
+        <svg class="spinner-cloud" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+        </svg>
+        <p class="spinner-text">Fetching cloud data...</p>
+      </div>
+    </div>
+
+    <!-- ============ ERROR CARD ============ -->
+    <div class="error-card" id="errorCard" style="display: none;">
+      <div class="error-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+      </div>
+      <h3 class="error-title">Connection Failed</h3>
+      <p class="error-message" id="errorMessage">Unable to reach the AWS API Gateway. Please check your network connection and try again.</p>
+      <button class="error-retry-btn" id="errorRetryBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        Retry Connection
+      </button>
+    </div>
+
+    <!-- ============ DASHBOARD CONTENT (hidden until data loads) ============ -->
+    <div class="dashboard-content" id="dashboardContent" style="display: none;">
+
+      <!-- --------- SUMMARY CARDS SECTION --------- -->
+      <section class="section" id="summary">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Cost Overview
+          </h2>
+          <span class="section-badge" id="lastUpdated">Last updated: --</span>
+        </div>
+
+        <div class="summary-grid">
+          <!-- Card 1: Total Snapshots -->
+          <div class="summary-card card-snapshots" id="cardTotalSnapshots">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <div class="card-body">
+              <p class="card-label">Total Snapshots</p>
+              <h3 class="card-value" id="totalSnapshots">--</h3>
+              <p class="card-sub">Analyzed by Lambda</p>
+            </div>
+            <div class="card-glow"></div>
+          </div>
+
+          <!-- Card 2: Deleted Waste -->
+          <div class="summary-card card-deleted" id="cardDeletedWaste">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </div>
+            <div class="card-body">
+              <p class="card-label">Deleted Waste</p>
+              <h3 class="card-value" id="deletedWaste">--</h3>
+              <p class="card-sub">Resources purged</p>
+            </div>
+            <div class="card-glow"></div>
+          </div>
+
+          <!-- Card 3: Active Snapshots -->
+          <div class="summary-card card-active" id="cardActiveSnapshots">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="card-body">
+              <p class="card-label">Active Snapshots</p>
+              <h3 class="card-value" id="activeSnapshots">--</h3>
+              <p class="card-sub">Currently in use</p>
+            </div>
+            <div class="card-glow"></div>
+          </div>
+
+          <!-- Card 4: Monthly Savings -->
+          <div class="summary-card card-monthly" id="cardMonthlySavings">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="card-body">
+              <p class="card-label">Monthly Savings</p>
+              <h3 class="card-value" id="monthlySavings">--</h3>
+              <p class="card-sub">Estimated USD</p>
+            </div>
+            <div class="card-glow"></div>
+          </div>
+
+          <!-- Card 5: Yearly Savings -->
+          <div class="summary-card card-yearly" id="cardYearlySavings">
+            <div class="card-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="card-body">
+              <p class="card-label">Yearly Savings</p>
+              <h3 class="card-value" id="yearlySavings">--</h3>
+              <p class="card-sub">Projected annually</p>
+            </div>
+            <div class="card-glow"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- --------- STATUS INDICATOR SECTION --------- -->
+      <section class="section" id="status-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Infrastructure Status
+          </h2>
+        </div>
+        <div class="status-banner" id="statusBanner">
+          <div class="status-icon" id="statusIcon"></div>
+          <div class="status-text">
+            <h3 id="statusTitle">Checking...</h3>
+            <p id="statusMessage">Analyzing infrastructure health</p>
+          </div>
+          <div class="status-pulse" id="statusPulse"></div>
+        </div>
+      </section>
+
+      <!-- --------- PURGED RESOURCES TABLE --------- -->
+      <section class="section" id="table-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Purged Resources Detail
+          </h2>
+          <span class="section-badge" id="resourceCount">0 resources</span>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="resourceTable">
+            <thead>
+              <tr>
+                <th>Snapshot ID</th>
+                <th>Size (GB)</th>
+                <th>Monthly Waste Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Rows injected by JavaScript -->
+            </tbody>
+          </table>
+          <!-- Shown when no data -->
+          <div class="table-empty" id="tableEmpty" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <p>No waste resources found — your infrastructure is clean!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- --------- CHARTS SECTION --------- -->
+      <section class="section" id="charts-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Cost Analytics
+          </h2>
+        </div>
+        <div class="charts-grid">
+          <!-- Pie Chart Card -->
+          <div class="chart-card" id="pieChartCard">
+            <h3 class="chart-title">Snapshot Distribution</h3>
+            <p class="chart-subtitle">Active vs Deleted snapshots</p>
+            <div class="chart-container">
+              <canvas id="pieChart"></canvas>
+            </div>
+          </div>
+          <!-- Bar Chart Card -->
+          <div class="chart-card" id="barChartCard">
+            <h3 class="chart-title">Savings Comparison</h3>
+            <p class="chart-subtitle">Monthly vs Yearly projected savings</p>
+            <div class="chart-container">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer" id="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 15a4 4 0 0 0 4 4h10a3 3 0 0 0 .75-5.91A5.002 5.002 0 0 0 8 10.1 4.5 4.5 0 0 0 3 15z" />
+        </svg>
+        <span>CloudOps Console</span>
+      </div>
+      <p class="footer-text">Built with <span class="footer-highlight">AWS Lambda</span>, <span class="footer-highlight">API Gateway</span>, and <span class="footer-highlight">JavaScript</span></p>
+      <p class="footer-copy">&copy; 2026 Cloud Cost Optimization — Serverless Automation</p>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
