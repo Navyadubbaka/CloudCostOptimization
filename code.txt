@@ -1,0 +1,83 @@
+import boto3
+import json
+from botocore.exceptions import ClientError
+
+ec2 = boto3.client('ec2')
+
+# AWS standard baseline pricing for EBS snapshots ($0.05 per GB-month)
+SNAPSHOT_GB_COST_MONTHLY = 0.05
+
+def lambda_handler(event, context):
+    deleted_snapshots = []
+    active_snapshots_count = 0
+    estimated_monthly_savings = 0.0
+
+    try:
+        # 1. Fetch all snapshots owned by this account
+        snapshot_response = ec2.describe_snapshots(OwnerIds=['self'])
+        snapshots = snapshot_response.get('Snapshots', [])
+
+        # 2. Bulk fetch all active volumes in a single query (prevents API throttling)
+        volume_response = ec2.describe_volumes()
+        active_volumes = {
+            vol['VolumeId']: vol['Attachments'] 
+            for vol in volume_response.get('Volumes', [])
+        }
+
+        # 3. Analyze resources
+        for snapshot in snapshots:
+            snapshot_id = snapshot['SnapshotId']
+            volume_id = snapshot.get('VolumeId')
+            volume_size_gb = snapshot.get('VolumeSize', 0)
+
+            # Check if parent volume is completely missing or orphaned
+            if (volume_id not in active_volumes) or (not active_volumes[volume_id]):
+                try:
+                    # Physically purge the waste resource
+                    ec2.delete_snapshot(SnapshotId=snapshot_id)
+                    
+                    deleted_snapshots.append({
+                        "snapshotId": snapshot_id,
+                        "sizeGb": volume_size_gb,
+                        "monthlyWasteCost": round(volume_size_gb * SNAPSHOT_GB_COST_MONTHLY, 2)
+                    })
+                    estimated_monthly_savings += (volume_size_gb * SNAPSHOT_GB_COST_MONTHLY)
+                except ClientError as e:
+                    # Catch cases where a snapshot is currently being deleted or locked by an AMI
+                    print(f"Skipping snapshot {snapshot_id}: {e.response['Error']['Message']}")
+                    continue
+            else:
+                active_snapshots_count += 1
+
+        # 4. Construct the clean dashboard payload
+        dashboard_data = {
+            "summary": {
+                "totalSnapshotsAnalyzed": len(snapshots),
+                "deletedWasteCount": len(deleted_snapshots),
+                "remainingActiveCount": active_snapshots_count,
+                "estimatedMonthlySavingsUsd": round(estimated_monthly_savings, 2),
+                "estimatedYearlySavingsUsd": round(estimated_monthly_savings * 12, 2)
+            },
+            "purgedItemsDetails": deleted_snapshots
+        }
+
+        # 5. Return HTTP response structured for AWS API Gateway integration
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'  # Crucial for preventing CORS errors on your frontend!
+            },
+            'body': json.dumps(dashboard_data)
+        }
+
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({"error": str(e)})
+        }
+
