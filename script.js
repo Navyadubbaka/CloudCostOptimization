@@ -1,5 +1,5 @@
 const API_URL =
-  "##YOUR API KEY FROM AWS API GATEWAY##"; /* <-- REPLACE WITH YOUR API URL */
+  "##YOUR API KEY FROM AWS API GATEWAY###"; /* <-- REPLACE WITH YOUR API URL */
 
 const loadingOverlay = document.getElementById("loadingOverlay");
 const errorCard = document.getElementById("errorCard");
