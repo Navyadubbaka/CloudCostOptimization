@@ -1,7 +1,5 @@
-
 const API_URL =
-  "https://yg8e15q1vg.execute-api.us-east-1.amazonaws.com/prod/cleanup-data";
-
+  "##YOUR API KEY FROM AWS API GATEWAY##"; /* <-- REPLACE WITH YOUR API URL */
 
 const loadingOverlay = document.getElementById("loadingOverlay");
 const errorCard = document.getElementById("errorCard");
@@ -37,7 +35,6 @@ const navLinks = document.querySelectorAll(".nav-link");
 // Chart instances (stored globally so we can destroy & recreate on refresh)
 let pieChartInstance = null;
 let barChartInstance = null;
-
 
 function initNavigation() {
   // --- Smooth Scroll on Nav Link Click ---
@@ -103,12 +100,10 @@ function initNavigation() {
   });
 }
 
-
 function setActiveNavLink(activeLink) {
   navLinks.forEach((l) => l.classList.remove("active"));
   activeLink.classList.add("active");
 }
-
 
 async function fetchDashboardData() {
   // Show loading state, hide other states
@@ -285,7 +280,6 @@ function showError(message) {
   errorMessage.textContent = `Error: ${message}`;
 }
 
-
 function renderSummaryCards(summary) {
   animateValue(totalSnapshotsEl, 0, summary.totalSnapshotsAnalyzed || 0, 800);
   animateValue(deletedWasteEl, 0, summary.deletedWasteCount || 0, 800);
@@ -305,7 +299,6 @@ function renderSummaryCards(summary) {
     true,
   );
 }
-
 
 function animateValue(element, start, end, duration, isCurrency = false) {
   const startTime = performance.now();
@@ -403,7 +396,6 @@ function renderTable(purgedItems) {
     });
   });
 }
-
 
 function renderCharts(summary) {
   if (pieChartInstance) pieChartInstance.destroy();
@@ -552,7 +544,6 @@ function createGradient(ctx, colorStart, colorEnd) {
   return gradient;
 }
 
-
 function updateLastUpdated() {
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-US", {
@@ -562,7 +553,6 @@ function updateLastUpdated() {
   });
   lastUpdatedEl.textContent = `Last updated: ${timeStr}`;
 }
-
 
 refreshBtn.addEventListener("click", () => {
   refreshBtn.classList.add("loading");
@@ -575,7 +565,6 @@ refreshBtn.addEventListener("click", () => {
 errorRetryBtn.addEventListener("click", () => {
   fetchDashboardData();
 });
-
 
 document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
