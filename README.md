@@ -1,5 +1,38 @@
-#AWS Cloud Cost Optimization Dashboard
+# Cloud Cost Optimizer
 
-The AWS Cloud Cost Optimization Dashboard is a real-time cloud monitoring and automation project designed to identify and optimize unused AWS resources, particularly orphaned EBS snapshots associated with terminated EC2 instances. The project uses AWS Lambda with Python and boto3 to analyze snapshots, detect stale resources, estimate potential cost savings, and automate cleanup operations. API Gateway is integrated with Lambda to expose live JSON-based cloud analytics through a REST API.
+Automated AWS cost optimization dashboard that identifies and removes orphaned EBS snapshots.
 
-The frontend dashboard is built using HTML, CSS, JavaScript, and Chart.js to visualize cloud infrastructure metrics such as total snapshots, deleted waste resources, active snapshots, and estimated monthly/yearly savings. The dashboard dynamically fetches real-time AWS data through API Gateway and presents it with interactive charts, status indicators, and resource tables, providing a production-inspired cloud cost monitoring solution.
+## Tech Stack
+
+- **Backend:** Python, AWS Lambda, EC2, API Gateway
+- **Frontend:** HTML, CSS, JavaScript, Chart.js
+- **CI/CD:** GitHub Actions
+
+## Quick Start
+
+1. Deploy `code.txt` to AWS Lambda (Python 3.11)
+2. Create API Gateway trigger
+3. Update `script.js` with your API URL
+4. Open `index.html` in browser
+
+## Features
+
+- 🔍 Detect orphaned EBS snapshots
+- 📊 Calculate monthly/yearly savings
+- 🚀 Automated cleanup
+- 💻 Real-time dashboard
+- 🔐 Dry-run mode for testing
+
+## File Structure
+
+```
+├── code.txt              (Lambda function)
+├── index.html            (Frontend)
+├── script.js             (API integration)
+├── style.css             (Styling)
+└── SETUP_GUIDE.md        (Detailed setup)
+```
+
+## Setup
+
+See [SETUP_GUIDE.md](SETUP_GUIDE.md) for complete deployment instructions.
