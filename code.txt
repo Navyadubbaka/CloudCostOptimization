@@ -1,136 +1,86 @@
 import boto3
 import json
-import os
-import logging
 from botocore.exceptions import ClientError
 
-# Configure logging for CloudWatch
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-# Initialize AWS EC2 client to interact with EC2 resources
+# Create EC2 client for snapshot and volume operations
 ec2 = boto3.client('ec2')
 
-# AWS standard baseline pricing for EBS snapshots ($0.05 per GB-month)
-# This is used to calculate potential cost savings from deleting orphaned snapshots
+# Fixed cost estimate for EBS snapshot storage
 SNAPSHOT_GB_COST_MONTHLY = 0.05
 
-# Environment variables (optional, for production)
-AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
-DRY_RUN = os.getenv('DRY_RUN', 'false').lower() == 'true'
-
 def lambda_handler(event, context):
-    # AWS Lambda handler that identifies and removes orphaned EBS snapshots to reduce cloud costs
-    # Returns a detailed report of deleted snapshots and estimated savings
-    
-    # Extract query parameters from API Gateway event
-    query_params = event.get('queryStringParameters') or {}
-    dry_run_mode = query_params.get('dryRun', 'false').lower() == 'true'
-    
-    # Log the incoming request
-    logger.info(f"Lambda invoked with event: {json.dumps(event)}")
-    logger.info(f"Dry-run mode: {dry_run_mode}")
-    
-    # Initialize tracking variables
-    deleted_snapshots = []  # Store details of successfully deleted snapshots
-    active_snapshots_count = 0  # Count snapshots still in use
-    estimated_monthly_savings = 0.0  # Track total cost savings
+    # Track report data for the response
+    deleted_snapshots = []
+    active_snapshots_count = 0
+    estimated_monthly_savings = 0.0
 
     try:
-        # Step 1: Retrieve all snapshots owned by this AWS account
+        # 1. Fetch all snapshots owned by this account
         snapshot_response = ec2.describe_snapshots(OwnerIds=['self'])
         snapshots = snapshot_response.get('Snapshots', [])
 
-        # Step 2: Get all active volumes and their attachment status
-        # This single query is more efficient than checking each snapshot individually
+        # 2. Bulk fetch all active volumes in a single query (prevents API throttling)
         volume_response = ec2.describe_volumes()
         active_volumes = {
             vol['VolumeId']: vol['Attachments'] 
             for vol in volume_response.get('Volumes', [])
         }
 
-        # Step 3: Process each snapshot and identify orphaned ones
+        # 3. Analyze resources
         for snapshot in snapshots:
             snapshot_id = snapshot['SnapshotId']
-            volume_id = snapshot.get('VolumeId')  # Parent volume ID (if exists)
+            volume_id = snapshot.get('VolumeId')
             volume_size_gb = snapshot.get('VolumeSize', 0)
 
-            # Check if this snapshot's parent volume no longer exists or has no attachments
-            # This indicates the snapshot is orphaned and safe to delete
+            # If the parent volume is missing or has no attachments, mark it as orphaned
             if (volume_id not in active_volumes) or (not active_volumes[volume_id]):
                 try:
-                    # In dry-run mode, don't actually delete, just report what would be deleted
-                    if not dry_run_mode:
-                        # Delete the orphaned snapshot to free up storage costs
-                        ec2.delete_snapshot(SnapshotId=snapshot_id)
-                        logger.info(f"Deleted snapshot: {snapshot_id} ({volume_size_gb} GB)")
-                    else:
-                        logger.info(f"[DRY RUN] Would delete snapshot: {snapshot_id} ({volume_size_gb} GB)")
+                    # Snapshot deletion is currently commented out for safety
+                    # ec2.delete_snapshot(SnapshotId=snapshot_id)
                     
-                    # Record the deleted snapshot with its size and cost impact
                     deleted_snapshots.append({
                         "snapshotId": snapshot_id,
                         "sizeGb": volume_size_gb,
-                        "monthlyWasteCost": round(volume_size_gb * SNAPSHOT_GB_COST_MONTHLY, 2),
-                        "status": "dry-run" if dry_run_mode else "deleted"
+                        "monthlyWasteCost": round(volume_size_gb * SNAPSHOT_GB_COST_MONTHLY, 2)
                     })
-                    
-                    # Add to total savings calculation
                     estimated_monthly_savings += (volume_size_gb * SNAPSHOT_GB_COST_MONTHLY)
                 except ClientError as e:
-                    # Some snapshots may be locked by AMIs or in deletion process
-                    # Skip these without failing the entire operation
-                    error_message = e.response['Error']['Message']
-                    logger.warning(f"Skipping snapshot {snapshot_id}: {error_message}")
-                    print(f"Skipping snapshot {snapshot_id}: {error_message}")
+                    # Skip snapshots that cannot be deleted due to AWS restrictions
+                    print(f"Skipping snapshot {snapshot_id}: {e.response['Error']['Message']}")
                     continue
             else:
-                # This snapshot is still attached to an active volume, keep it
                 active_snapshots_count += 1
 
-        # Step 4: Create a detailed summary report
+        # 4. Construct the clean dashboard payload
         dashboard_data = {
             "summary": {
-                "totalSnapshotsAnalyzed": len(snapshots),  # Total snapshots checked
-                "deletedWasteCount": len(deleted_snapshots),  # Orphaned snapshots removed
-                "remainingActiveCount": active_snapshots_count,  # Still-in-use snapshots
-                "estimatedMonthlySavingsUsd": round(estimated_monthly_savings, 2),  # Monthly cost reduction
-                "estimatedYearlySavingsUsd": round(estimated_monthly_savings * 12, 2),  # Annual cost reduction
-                "dryRunMode": dry_run_mode  # Whether this was a dry-run execution
+                "totalSnapshotsAnalyzed": len(snapshots),
+                "deletedWasteCount": len(deleted_snapshots),
+                "remainingActiveCount": active_snapshots_count,
+                "estimatedMonthlySavingsUsd": round(estimated_monthly_savings, 2),
+                "estimatedYearlySavingsUsd": round(estimated_monthly_savings * 12, 2)
             },
-            "purgedItemsDetails": deleted_snapshots  # List of deleted snapshots with details
+            "purgedItemsDetails": deleted_snapshots
         }
 
-        # Log the final report
-        logger.info(f"Optimization complete. Analyzed: {len(snapshots)} snapshots, "
-                   f"Deleted: {len(deleted_snapshots)}, Savings: ${round(estimated_monthly_savings, 2)}/month")
-
-        # Step 5: Return success response in API Gateway format
-        # CORS header allows the response to be used by web frontend
+        # 5. Return HTTP response structured for AWS API Gateway integration
         return {
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'  # Allows cross-origin requests from the frontend
+                'Access-Control-Allow-Origin': '*'  # Crucial for preventing CORS errors on your frontend!
             },
             'body': json.dumps(dashboard_data)
         }
 
     except Exception as e:
-        # If anything goes wrong, return an error response instead of crashing
-        # This ensures the Lambda function gracefully handles unexpected issues
-        error_message = str(e)
-        logger.error(f"Lambda execution failed: {error_message}", exc_info=True)
-        
+        # Return a generic error response for API Gateway
         return {
-            'statusCode': 500,  # Server error status code
+            'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({
-                "error": error_message,
-                "errorType": type(e).__name__
-            })  # Return error message for debugging
+            'body': json.dumps({"error": str(e)})
         }
 
