@@ -130,7 +130,3 @@ CloudCostOptimization/
 ---
 
 Done! Your system is now ready to optimize AWS costs! 🚀
-
-```
-
-```
