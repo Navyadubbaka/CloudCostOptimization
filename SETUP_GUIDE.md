@@ -23,8 +23,8 @@ Frontend (HTML/JS) → API Gateway → Lambda Function → AWS EC2
 
 ### 1.2 Upload Code
 
-1. Copy the content from `code.txt`
-2. Paste into Lambda function code editor
+1. Open the Lambda function code editor
+2. Paste your Lambda function code
 3. Click **Deploy**
 
 ### 1.3 Set Environment Variables (Optional)
@@ -68,106 +68,17 @@ Frontend (HTML/JS) → API Gateway → Lambda Function → AWS EC2
 
 ## Step 3: Update Frontend
 
-### 3.1 Update script.js
+### 3.1 Update `script.js`
 
-Replace the API_URL with your actual API Gateway URL:
+Update the frontend integration to use your API Gateway URL and ensure the fetch logic points to the Lambda endpoint.
 
-```javascript
-const API_URL =
-  "https://abc123.execute-api.us-east-1.amazonaws.com/prod/snapshots";
-```
+### 3.2 Frontend Behavior
 
-### 3.2 Add Fetch Function
+Configure the frontend controls so that refresh and delete actions call the API Gateway endpoint, handle responses, and display results on the dashboard.
 
-Add this function to call the Lambda via API Gateway:
+### 3.3 Button Listeners
 
-```javascript
-async function fetchOptimizationData(dryRun = true) {
-  try {
-    loadingOverlay.style.display = "flex";
-    errorCard.style.display = "none";
-
-    const url = dryRun ? `${API_URL}?dryRun=true` : API_URL;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = JSON.parse(await response.text());
-
-    if (data.body) {
-      const parsedData = JSON.parse(data.body);
-      updateDashboard(parsedData);
-    } else {
-      updateDashboard(data);
-    }
-
-    loadingOverlay.style.display = "none";
-  } catch (error) {
-    console.error("Error:", error);
-    showError(`Failed to fetch data: ${error.message}`);
-  }
-}
-
-function updateDashboard(data) {
-  const { summary, purgedItemsDetails } = data;
-
-  // Update summary cards
-  totalSnapshotsEl.textContent = summary.totalSnapshotsAnalyzed;
-  deletedWasteEl.textContent = summary.deletedWasteCount;
-  activeSnapshotsEl.textContent = summary.remainingActiveCount;
-  monthlySavingsEl.textContent = `$${summary.estimatedMonthlySavingsUsd}`;
-  yearlySavingsEl.textContent = `$${summary.estimatedYearlySavingsUsd}`;
-
-  // Update table
-  tableBody.innerHTML = "";
-  if (purgedItemsDetails.length === 0) {
-    tableEmpty.style.display = "block";
-  } else {
-    tableEmpty.style.display = "none";
-    purgedItemsDetails.forEach((item) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${item.snapshotId}</td>
-        <td>${item.sizeGb} GB</td>
-        <td>$${item.monthlyWasteCost}</td>
-        <td><span class="badge">${item.status}</span></td>
-      `;
-      tableBody.appendChild(row);
-    });
-  }
-
-  lastUpdatedEl.textContent = new Date().toLocaleTimeString();
-}
-
-function showError(message) {
-  errorMessage.textContent = message;
-  errorCard.style.display = "block";
-  loadingOverlay.style.display = "none";
-}
-```
-
-### 3.3 Add Button Listeners
-
-```javascript
-refreshBtn.addEventListener("click", () => {
-  fetchOptimizationData(true); // Dry-run mode
-});
-
-// Or for actual deletion:
-deleteBtn.addEventListener("click", () => {
-  if (confirm("Are you sure you want to delete orphaned snapshots?")) {
-    fetchOptimizationData(false); // Actual deletion
-  }
-});
-```
+Ensure your refresh and delete buttons are wired to the frontend logic and that user actions trigger the correct API requests.
 
 ---
 
@@ -185,36 +96,23 @@ curl https://abc123.execute-api.us-east-1.amazonaws.com/prod/snapshots?dryRun=tr
 2. Click the Refresh button
 3. Check if data loads
 
-### 4.3 Check CloudWatch Logs
-
-1. Go to **CloudWatch** → **Log Groups** → `/aws/lambda/CloudCostOptimizer`
-2. View logs to troubleshoot
-
 ---
 
-## Environment Variables for GitHub Actions
+## Deployment Notes
 
-Add these to GitHub Settings → Secrets and variables → Actions:
-
-```
-AWS_ACCESS_KEY_ID = your-access-key
-AWS_SECRET_ACCESS_KEY = your-secret-key
-AWS_REGION = us-east-1
-LAMBDA_FUNCTION_NAME = CloudCostOptimizer
-API_GATEWAY_ID = abc123 (from your API URL)
-```
+This project does not rely on CloudWatch or GitHub workflow automation. Deploy the Lambda function manually using the AWS Console and connect the API Gateway from the setup steps above.
 
 ---
 
 ## Troubleshooting
 
-| Issue            | Solution                                    |
-| ---------------- | ------------------------------------------- |
-| CORS Error       | Enable CORS on API Gateway method           |
-| 403 Forbidden    | Check IAM role permissions on Lambda        |
-| 500 Error        | Check CloudWatch logs for Lambda errors     |
-| No data returned | Verify EC2 describe permissions in IAM role |
-| Timeout          | Increase Lambda timeout to 60 seconds       |
+| Issue            | Solution                                       |
+| ---------------- | ---------------------------------------------- |
+| CORS Error       | Enable CORS on API Gateway method              |
+| 403 Forbidden    | Check IAM role permissions on Lambda           |
+| 500 Error        | Review Lambda execution details in AWS Console |
+| No data returned | Verify EC2 describe permissions in IAM role    |
+| Timeout          | Increase Lambda timeout to 60 seconds          |
 
 ---
 
@@ -222,15 +120,17 @@ API_GATEWAY_ID = abc123 (from your API URL)
 
 ```
 CloudCostOptimization/
-├── code.txt                    (Lambda function code)
-├── script.js                   (Frontend JavaScript)
-├── index.html                  (Frontend HTML)
-├── style.css                   (Frontend styling)
-├── .github/workflows/
-│   └── awspipeline.yaml       (GitHub Actions CI/CD)
-└── SETUP_GUIDE.md             (This file)
+├── code.txt (Lambda function code)
+├── script.js (Frontend JavaScript)
+├── index.html (Frontend HTML)
+├── style.css (Frontend styling)
+└── SETUP_GUIDE.md (This file)
 ```
 
 ---
 
 Done! Your system is now ready to optimize AWS costs! 🚀
+
+```
+
+```

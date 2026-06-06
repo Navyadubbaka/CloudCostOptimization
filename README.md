@@ -6,7 +6,6 @@ Automated AWS cost optimization dashboard that identifies and removes orphaned E
 
 - **Backend:** Python, AWS Lambda, EC2, API Gateway
 - **Frontend:** HTML, CSS, JavaScript, Chart.js
-- **CI/CD:** GitHub Actions
 
 ## Quick Start
 
